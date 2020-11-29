@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cmath>
 #include <queue>
+#include <stack>
 using namespace std;
 
 typedef struct BiTNode
@@ -191,6 +192,7 @@ bool LeftChild(BiTree T, BiTNode* cur_p, BiTree &leftChild)
     if (cur_p->lchild != NULL)
     {
         leftChild = cur_p->lchild;
+        return true;
     }
     else
     {
@@ -211,6 +213,7 @@ bool RightChild(BiTree T, BiTNode* cur_p, BiTree &rightChild)
     if (cur_p->rchild != NULL)
     {
         rightChild = cur_p->rchild;
+        return true;
     }
     else
     {
@@ -493,6 +496,97 @@ bool IsCompleteBiTree(BiTree T)
     }
     return true;
 }
+
+void PreOrderTraverseWithoutRecursion(BiTree T)
+{
+    if (T == NULL)
+    {
+        return;
+    }
+    stack <BiTNode*> S;
+    BiTNode* p, * q;
+    p = T;
+    S.push(p);
+    while (!S.empty())
+    {
+        q = S.top();
+        S.pop();
+        visit(q);
+        if (q->rchild != NULL)
+        {
+            S.push(q->rchild);
+        }
+        if (q->lchild != NULL)
+        {
+            S.push(q->lchild);
+        }
+    }
+}
+//非递归方法实现先序遍历
+
+void InOrderTraverseWithoutRecursion(BiTree T) 
+{
+    if (T == NULL)
+    {
+        return;
+    }
+    stack <BiTNode*> S;
+    BiTNode *p;
+    p = T;
+    while (!S.empty() || p != NULL)
+    {
+        while (p != NULL) 
+        {
+            S.push(p);
+            p = p->lchild;
+        }
+        if (!S.empty())  //栈顶元素没有左儿子 
+        {
+            p = S.top();
+            visit(p);
+            S.pop();
+            p = p->rchild;
+        }
+    }
+    return;
+}
+//非递归方法实现中序遍历
+
+
+void PostOrderTraverseWithoutRecursion(BiTree T) 
+{
+    if (T == NULL)
+    {
+        return;
+    }
+    stack <BiTNode*> S;
+    BiTNode* cur = NULL, *pre = NULL;
+    cur = T;
+    S.push(cur);
+    while (!S.empty())
+    {
+        cur = S.top();
+        if ((cur->lchild == NULL && cur->rchild == NULL) || (pre != NULL && (pre == cur->lchild || pre == cur->rchild))) 
+        {
+            visit(cur);
+            S.pop();
+            pre = cur;
+        }
+        else
+        {
+            if (cur->rchild != NULL)
+            {
+                S.push(cur->rchild);
+            }
+            if (cur->lchild != NULL) 
+            {
+                S.push(cur->lchild);
+            }
+        }
+    }
+    return;
+}
+//非递归方法实现后序遍历
 int main()
 {
     fstream file("E://vscode//C++//Data_structure//Fifth//CreateBiTree.txt", ios::in);
@@ -510,10 +604,20 @@ int main()
     cout << endl;
     PreOrderTraverse(BT);
     cout << endl;
+    PreOrderTraverseWithoutRecursion(BT);
+    cout << endl;
+
+    InOrderTraverse(BT);
+    cout << endl;
+    InOrderTraverseWithoutRecursion(BT);
+    cout << endl;
+    cout << "YES" << endl;
     PostOrderTraverse(BT);
     cout << endl;
+    PostOrderTraverseWithoutRecursion(BT);
+    cout << endl;
     /*DestroyBiTree(BT);
-    LevelOrderTraverse(BT);*/
+    LevelOrderTraverse(BT);
     int depth = 0;
     depth=BiTreeDepth(BT);
     cout << depth << endl;
@@ -523,7 +627,7 @@ int main()
     BiTNode* p = BT->lchild->rchild->rchild;
     Value(BT, p, e);
     cout << e << endl;
-    /*Assign(BT, p, '9');
+    Assign(BT, p, '9');
     LevelOrderTraverse(BT);
     cout << endl;
     DeleteChild(BT, p, 1);
@@ -542,11 +646,12 @@ int main()
     LevelOrderTraverse(BT);
     cout << endl;
     Pruning(BT,'D',BT);
-    LevelOrderTraverse(BT);*/
+    LevelOrderTraverse(BT);
     Pruning(BT, 'D', BT);
     LevelOrderTraverse(BT);
     cout << endl;
-    cout << IsCompleteBiTree(BT) << endl;
+    cout << IsCompleteBiTree(BT) << endl;*/
+
     return 0;
 }
 
