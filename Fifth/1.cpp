@@ -1,6 +1,7 @@
 #define TElemtype char
 #include <iostream>
 #include <fstream>
+#include <malloc.h>
 #include <cmath>
 #include <queue>
 #include <stack>
@@ -616,6 +617,7 @@ int main()
     cout << endl;
     PostOrderTraverseWithoutRecursion(BT);
     cout << endl;
+
     /*DestroyBiTree(BT);
     LevelOrderTraverse(BT);
     int depth = 0;
@@ -636,21 +638,21 @@ int main()
    /* LeftChild(BT, p, q);
     cout << "p is " << p->data << " and it's leftChild is " << q->data << endl;*/
     
-   /* BiTNode* q;
-    Parent(BT, p, q);
-    cout <<"p is "<< p->data<< " and it's parent is " << q->data << endl;
+    // BiTNode* q;
+    // Parent(BT, p, q);
+    // cout <<"p is "<< p->data<< " and it's parent is " << q->data << endl;
    
-    LeftBrother(BT, p, q);
-    cout << "p is " << p->data << " and it's leftBrother is " <<q->data<< endl;
-    Assign(BT, BT->rchild, 'D');
-    LevelOrderTraverse(BT);
-    cout << endl;
+    // LeftBrother(BT, p, q);
+    // cout << "p is " << p->data << " and it's leftBrother is " <<q->data<< endl;
+    // Assign(BT, BT->rchild, 'D');
+    // LevelOrderTraverse(BT);
+    // cout << endl;
     Pruning(BT,'D',BT);
     LevelOrderTraverse(BT);
     Pruning(BT, 'D', BT);
-    LevelOrderTraverse(BT);
+    //LevelOrderTraverse(BT);
     cout << endl;
-    cout << IsCompleteBiTree(BT) << endl;*/
+    cout << IsCompleteBiTree(BT) << endl;
 
     return 0;
 }
