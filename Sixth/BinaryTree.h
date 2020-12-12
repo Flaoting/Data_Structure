@@ -630,6 +630,47 @@ void DisplayBinaryTree(BiTree &root, int ident)
 
 }
 
+int CaculateWidthOfBinaryTree(BiTree &BT)
+{
+    BiTNode *p = BT;
+    queue <BiTNode*> Q;
+    Q.push(BT);
+    Q.push(NULL);
+    
+    int max_cnt = -1;
+    int cnt = 1;
+    bool flag = false;
+
+    while(!Q.empty())
+    {
+        p = Q.front();
+        Q.pop();
+        if(p == NULL)
+        {
+            if(flag)
+            {
+                break;
+            }
+            max_cnt = max(max_cnt,cnt);
+            cnt = 0;
+            Q.push(NULL);
+            flag = true;
+            continue;
+        }
+        flag = false;
+        if(p->lchild != NULL)
+        {
+            cnt ++;
+            Q.push(p->lchild);
+        }
+        if(p->rchild != NULL)
+        {
+            cnt ++;
+            Q.push(p->rchild);
+        }
+    }
+    return max_cnt;
+}
 
 void test()
 {
@@ -645,13 +686,16 @@ void test()
     //ShowBiTree(BT);
     cout << endl;
     DisplayBinaryTree(BT,0);
-    Pruning(BT,'A',BT);
+    //Pruning(BT,'A',BT);
+    
     // LevelOrderTraverse(BT);
-    // Pruning(BT, 'D', BT);
+    Pruning(BT, 'G', BT);
     // cout << endl;
     // cout << IsCompleteBiTree(BT) << endl;
-    cout << "BT = "<<BT<<endl;
+    int width = 0;
+    width = CaculateWidthOfBinaryTree(BT);
     DisplayBinaryTree(BT,0);
+    cout << "The width of BinaryTree is "<< width << endl;
     return ;
 }
 
