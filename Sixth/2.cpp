@@ -6,6 +6,8 @@
 （2） 在Huffman编码后，英文文章编码结果保存到文件中(code.dat)，编码结果必须是二进制形式，即0 1的信息用比特位表示，不能用字符’0’和’1’表示。
 （3） 实现解码功能。
 */
+/*实现对ASCII码 32~126 这95个字符的编码，他们的权重由在源文件中出现的频率决定，首先读取文件，计算每个ASCII码对应的权重，*/
+
 #include <iostream>
 #include <fstream>
 #include <malloc.h>
@@ -22,6 +24,7 @@ typedef struct HTNode
 
 typedef struct Code   //存放哈夫曼编码的数据元素结构
 {
+    char data;      //存入字符数据
     int bit[MaxBit];//数组
     int start;//编码的起始下标
     int weight;//字符的权值
@@ -65,19 +68,16 @@ void CaculateWeightAndSaveFile(int *weight, string inName, string outName)
     return;
 }
 
-void readFrequency(int &n, int *a ,string frequencyFileName)
+void readFrequency(int &n, HufCode code[], string frequencyFileName)  //个数 编码数组 文件名
 {
-    int N;  //我们这里规定N不能大于1000
     fstream file(frequencyFileName.c_str(),ios::in);
     if(!file)
     {
         throw "Floating TIP   In the function void readFrequency()  File " + frequencyFileName + " can't be opened , please check it. ";
     }
-    file >> N;
-    n = N;
-    for (int i = 1; i <= N; i++)
+    for (int i = 1; i <= n; i++)
     {
-        file >> a[i];
+        file >> code[i].data >> code[i].weight;
     }
     file.close();
     return;
@@ -146,7 +146,7 @@ void CreateHufTree(HufTree &HT, int n, int *w)
 }
 //建立霍夫曼树
 
-void CaculateHufCoding(HufTree HT, HufCode &HufTable[], int n)  //Tree ,霍夫曼编码表 n个节点
+void CaculateHufCoding(HufTree HT, HufCode HufTable[], int n)  //Tree ,霍夫曼编码表 n个节点
 {
     HufCode *cd = (HufCode*)malloc(sizeof(HufCode));
     int child, parent;  //临时变量
@@ -172,8 +172,6 @@ void CaculateHufCoding(HufTree HT, HufCode &HufTable[], int n)  //Tree ,霍夫�
             child = parent;
             parent = HT[parent].parent;
         }
-
-
     }
 }
 
