@@ -15,43 +15,44 @@
 #include <algorithm>
 using namespace std;
 
-bool cmp(const int &a, const int &b)
+bool cmp(const int& a, const int& b)
 {
     return a > b;
 }
 
-void swap(int &a, int &b)
+void swap(int& a, int& b)
 {
     int temp = a;
     a = b;
     b = temp;
-    return ;
+    return;
 }
+
 void Generate_random_sample()
 {
     string fileName;
     fstream file;
     stringstream order;
-    int num1[50005],num2[50005];
-
-    for(int i = 3; i <= 10; i++)
+    int *num1, *num2;
+    num1 = (int*)malloc(sizeof(int) * 50010);
+    num2 = (int*)malloc(sizeof(int) * 50010);
+    for (int i = 3; i <= 10; i++)
     {
         order << i;
         fileName = order.str() + ".txt";
-        cout << fileName<<" " << i <<" "<<order.str()<<endl;
-        file.open(fileName.c_str(),ios::out);
-        if(!file)
+        cout << fileName << " " << i << " " << order.str() << endl;
+        file.open(fileName.c_str(), ios::out);
+        if (!file)
         {
-            cout << fileName << "can't be opened, please check it ！"<<endl;
+            cout << fileName << "can't be opened, please check it ！" << endl;
             exit(0);
         }
-
         srand((unsigned int)time(NULL));
 
-        for(int j = 1; j <= 50000; j++)
+        for (int j = 1; j <= 50000; j++)
         {
             file << rand() << " ";
-            if(i % 25 == 0)
+            if (j % 25 == 0)
             {
                 file << endl;
             }
@@ -63,39 +64,43 @@ void Generate_random_sample()
 
     srand((unsigned int)time(NULL));
 
-    for(int i = 1; i <= 50000; i++)
+    for (int i = 1; i <= 50000; i++)
     {
         num1[i] = rand();
         num2[i] = num1[i];
     }
-    sort(num1+1,num1+50000+1);  //正序
-    sort(num2,num2+50000+1,cmp);  //逆序
-    file.open("1.txt",ios::out);
-    for(int i = 1; i <= 50000; i++)
+    sort(num1 + 1, num1 + 50000 + 1);  //正序
+    sort(num2 + 1, num2 + 50000 + 1, cmp);  //逆序
+
+    file.open("1.txt", ios::out);
+
+    for (int i = 1; i <= 50000; i++)
     {
         file << num2[i] << " ";
-        if(i % 25 == 0)
+        if (i % 25 == 0)
         {
             file << endl;
         }
     }
     file.close();
-    file.open("2.txt",ios::out);
-    for(int i = 1; i <= 50000; i++)
+
+    file.open("2.txt", ios::out);
+    for (int i = 1; i <= 50000; i++)
     {
         file << num1[i] << " ";
-        if(i % 25 == 0)
+        if (i % 25 == 0)
         {
             file << endl;
         }
     }
     file.close();
-    return ;
+
+    return;
 }
 
 void show(int a[], int n)
 {
-    for(int i = 1; i <= n; i++)
+    for (int i = 1; i <= n; i++)
     {
         cout << a[i] << " ";
     }
@@ -104,15 +109,15 @@ void show(int a[], int n)
 
 //a is the array, n is number, and first is 1
 
-void Insertion_sort(int a[],int n)
+void Insertion_sort(int a[], int n)
 {
     int j = 0, temp = 0;
-    for(int i = 2; i <= n; i++)
+    for (int i = 2; i <= n; i++)
     {
         j = i;
         temp = a[i];
 
-        while(j > 1 && a[j-1] > temp )
+        while (j > 1 && a[j - 1] > temp)
         {
             a[j] = a[j - 1];
             j--;
@@ -124,19 +129,19 @@ void Insertion_sort(int a[],int n)
 //d is interval 
 void ShellInsertSort(int a[], int n, int d)
 {
-    int temp,j;
-    for(int i = d + 1; i <= n; i++)
+    int temp, j;
+    for (int i = d + 1; i <= n; i++)
     {
-        if(a[i] < a[i-d])
+        if (a[i] < a[i - d])
         {
             temp = a[i];
-            for(j = i; j > d; j = j - d)
+            for (j = i; j > d; j = j - d)
             {
-                if(temp < a[j-d])
+                if (temp < a[j - d])
                 {
-                    a[j] = a[j-d];
+                    a[j] = a[j - d];
                 }
-                else 
+                else
                 {
                     break;
                 }
@@ -148,23 +153,23 @@ void ShellInsertSort(int a[], int n, int d)
 
 void Shell_sort(int a[], int n)
 {
-    for(int i = 5; i >= 1; i-=2)
+    for (int i = 5; i >= 1; i -= 2)
     {
-        ShellInsertSort(a,n,i);
+        ShellInsertSort(a, n, i);
         //cout << i<<end
     }
     return;
 }
 
-void Bubble_sort(int a[],int n)
+void Bubble_sort(int a[], int n)
 {
-    for(int i = n; i > 1; i--)
-    {   
-        for(int j = 1; j < i; j++)
+    for (int i = n; i > 1; i--)
+    {
+        for (int j = 1; j < i; j++)
         {
-            if(a[j] > a[j+1])
+            if (a[j] > a[j + 1])
             {
-                swap(a[j],a[j+1]);
+                swap(a[j], a[j + 1]);
             }
         }
     }
@@ -174,16 +179,16 @@ void Bubble_sort(int a[],int n)
 int Partition(int a[], int low, int high)
 {
     int temp = a[low];
-    while(low < high)
+    while (low < high)
     {
-        while(low < high && a[high] >= temp)
+        while (low < high && a[high] >= temp)
         {
             high--;
         }
         a[low] = a[high];
-        while(low < high && a[low] <= temp)
+        while (low < high && a[low] <= temp)
         {
-            low ++;
+            low++;
         }
         a[high] = a[low];
     }
@@ -194,7 +199,7 @@ int Partition(int a[], int low, int high)
 void Qsort(int a[], int low, int high)
 {
     int pivotloc;
-    if(low < high)
+    if (low < high)
     {
         pivotloc = Partition(a, low, high);
         Qsort(a, low, pivotloc - 1);
@@ -203,94 +208,144 @@ void Qsort(int a[], int low, int high)
     return;
 }
 
-void Quick_sort(int a[],int n)
+void Quick_sort(int a[], int n)
 {
-    Qsort(a,1,n);
+    Qsort(a, 1, n);
     return;
 }
 
 void Selection_sort(int a[], int n)
 {
-    int k,temp;
-    for(int i = 1; i <= n; i++)
+    int k, temp;
+    for (int i = 1; i <= n; i++)
     {
         k = i;
-        for(int j = i + 1; j <= n; j++)
+        for (int j = i + 1; j <= n; j++)
         {
-            if(a[k] > a[j])
+            if (a[k] > a[j])
             {
                 k = j;
             }
         }
-        if(i != k)
+        if (i != k)
         {
-            swap(a[i],a[k]);
+            swap(a[i], a[k]);
         }
     }
-    return ;
+    return;
 }
+
+void HeapAdjust(int a[], int low, int high) 
+{
+    int temp = a[low];
+    int i = low, j;
+    while (i < low) 
+    {
+
+    }
+}
+//HeapAdjust
 
 bool FetchData(int a[], int i)
 {
     string fileName;
     fstream file;
     stringstream order;
-    
+
     order << i;
     fileName = order.str() + ".txt";
     //cout << fileName<<" " << i <<" "<<order.str()<<endl;
-    file.open(fileName.c_str(),ios::out);
-    if(!file)
+    file.open(fileName.c_str(), ios::in);
+    if (!file)
     {
-        cout << fileName << "can't be opened, please check it ！"<<endl;
+        cout << fileName << "can't be opened, please check it ！" << endl;
         exit(0);
     }
-    for(int j = 1; j <= 50000; j++)
+    for (int j = 1; j <= 50000; j++)
     {
-        if(file.eof())
+        if (file.eof())
         {
-            return false;    
+            return false;
         }
-        file >> a[i]; 
+        file >> a[j];
     }
     return true;
 }
-//取出第i个文件存放的数据
+//取出第i个文件存放的数据,50000个都取出来
 
-bool OneFunctionTime(void (*p)(int *, int ))
+bool OneFunctionTime(void (*p)(int*, int))
 {
-    int a[50100];
+    int *a;
+    a = (int*)malloc(sizeof(int) * 50010);
     int n = 50000;
-    clock_t start,end;
-    double dur;
-    for(int i = 3; i<=10; i++)
+    clock_t start, end;
+    for (int i = 1; i <= 10; i++)
     {
         start = clock();
         FetchData(a,i);
-        p(a,n);
+        p(a, 50000);
         end = clock();
-        dur = end - start;
-        cout << i << ".txt costs " << dur <<endl; 
+        show(a, 100);
+        cout << i << ".txt costs " << end-start << endl;
     }
+    return true;
 }
 
 void DisplayCaculationTime()
 {
-    void (*pfun)(int*, int );
-    pfun = NULL;
-    cout << "-------------------------------------------------------------"<<endl;
-    cout << "QuickSort"<<endl;
+
+    void (*pfun)(int*, int);
+    pfun = NULL;    //pfun is a function pointer
+    
+    /*cout << "-------------------------------------------------------------" << endl;
+    cout << "QuickSort" << endl;
     pfun = Quick_sort;
     OneFunctionTime(pfun);
+    cout << "-------------------------------------------------------------" << endl;
+
+    cout << "-------------------------------------------------------------" << endl;
+    cout << "SelectionSort" << endl;
+    pfun = Selection_sort;
+    OneFunctionTime(pfun);
+    cout << "-------------------------------------------------------------" << endl;
+
+    cout << "-------------------------------------------------------------" << endl;
+    cout << "InsertationSort" << endl;
+    pfun = Insertion_sort;
+    OneFunctionTime(pfun);
+    cout << "-------------------------------------------------------------" << endl;
+    
+    cout << "-------------------------------------------------------------" << endl;
+    cout << "ShellSort" << endl;
+    pfun = Shell_sort;
+    OneFunctionTime(pfun);
+    cout << "-------------------------------------------------------------" << endl;*/
+
+    cout << "-------------------------------------------------------------" << endl;
+    cout << "BubbleSort" << endl;
+    pfun = Bubble_sort;
+    OneFunctionTime(pfun);
+    cout << "-------------------------------------------------------------" << endl;
+
+
+
 }
 
 int main()
-{  
-    
-    // int a[30] = {-1,9,3,2,4,-5,6,10,23,445,29,129,23};
-    // show(a,10);
-    // pfun(a,10);
-    // show(a,10);
+{
+
+    /*int a[30] = {-1, 10,9,8,7,6,5,4,3,2,1 };
+    show(a, 10);
+    Bubble_sort(a, 10);
+    show(a, 10);*/
+    //Generate_random_sample();
     DisplayCaculationTime();
     return 0;
 }
+
+
+
+
+
+
+
