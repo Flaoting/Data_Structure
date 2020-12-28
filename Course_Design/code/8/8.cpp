@@ -238,13 +238,45 @@ void Selection_sort(int a[], int n)
 void HeapAdjust(int a[], int low, int high) 
 {
     int temp = a[low];
-    int i = low, j;
+    int i = low, j = i*2;
     while (i < low) 
     {
+        if(j + 1 < high && a[j] < a[j+1]) 
+        {
+            j++;
+        }
+        //在左右子树里边选择大的，j指向这个
 
+        if(temp >= a[j])
+        {
+            break;
+        }
+        //已经是大顶堆,结束这次循环
+
+        a[i] = a[j];
+        i = j;
+        j = 2 * i;
     }
+    a[i] = temp;    
+    return;
 }
 //HeapAdjust
+
+void HeapSort(int a[], int n)
+{
+    for(int j = n/2; i > 0; i--)
+    {
+        HeapAdjust(a,i,n);  //从下往上调整一遍
+    }
+
+    for(int i = n; i > 1; i--)
+    {
+        swap(a[1],a[i]);
+        HeapAdjust(a,1,i-1);
+    }
+    return;
+}
+
 
 bool FetchData(int a[], int i)
 {
