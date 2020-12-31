@@ -1,5 +1,4 @@
 #pragma comment(linker, "/STACK:10240000000,10240000000")
-#include <iostream>
 #include <vector>
 #include <queue>
 #include <stack>
@@ -7,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <iostream>
 using namespace std;
 
 vector<string> split(const string& str)
@@ -367,10 +367,11 @@ void Graph::BFS(int u, int v)
 
         }
     }
+    cout << "----------------------------------------------------------" << endl;
     cout << "最短路线共经过 " << visit[p->adjvex] << "站" << endl;
 
     stack<int> trail;
-    stack<int> bus;
+    queue<int> bus;
     ArcNode* AD;
     trail.push(v);  //终点进栈
     int pre = v, k = 0;
@@ -383,7 +384,7 @@ void Graph::BFS(int u, int v)
             {
                 trail.push(j);
                 pre = j;
-                cout << this->GetStopName(j) << endl;
+                //cout << this->GetStopName(j) << endl;
                 break;
             }
         }
@@ -402,7 +403,7 @@ void Graph::BFS(int u, int v)
             AD = AD->nextarc;
         }
         pre = k;
-        if (bus.empty() || bus.top() != AD->road)
+        if (bus.empty() || bus.front() != AD->road)
         {
             bus.push(AD->road);
             if (bus.size() != 1)
@@ -416,7 +417,7 @@ void Graph::BFS(int u, int v)
     cout << "所需换乘的车次如下:" << endl;
     while (!bus.empty())
     {
-        cout << bus.top() << "路 -> ";
+        cout << bus.front() << "路 -> ";
         bus.pop();
     }
     cout << "end" << endl;
@@ -584,25 +585,26 @@ void BusGraph::BFS(Graph &G,int u, int v)
     queue<int> sim;
     sim.push(BU.top());
     cout << "---------------------------------------------------------" << endl;
-    cout << "换 乘 次 数 最 少 的 路 线  如 下  : " << endl;
-    cout << "从 " << G.GetStopName(u) << "乘坐 " ;
+    cout << "最短路线共经过 "<<visit[k] - 1<<" 次换乘" << endl;
+    cout << "换乘次数最少的路线如下 : " << endl;
+    cout << "从 " << G.GetStopName(u) << " 乘坐 " ;
     pre = BU.top();
     cout << pre << " 路";
     BU.pop();
     while (!BU.empty())
     {
         k = BU.top();
-        cout << "  -> 在 ";
+        cout << " -> 在 ";
         cout <<  GetTransfer(pre, k)<< " 站换乘 ";
         cout <<k<< " 路";
         sim.push(k);
         pre = k;
         BU.pop();
     }
-    cout << "  最终到达 " << G.GetStopName(v) << endl;
+    cout << " -> 最终到达 " << G.GetStopName(v) << endl;
     cout << endl;
     cout << "所需乘坐的公交线路如下 : " << endl;
-    cout << sim.front();
+    cout << sim.front()<<" 路";
     sim.pop();
     while (!sim.empty())
     {
@@ -750,62 +752,53 @@ string BusGraph::GetTransfer(int u, int v)
     }
 }
 
-void test()
-{
-    string s1, s;
-    fstream file("南京公交线路.txt", ios::in);
-    file >> s1 >> s;
-    file.close();
-    cout << s1 << endl;
-    cout << s << endl;
-    vector<string> ss = split(s);
-    for (vector<string>::iterator iter = ss.begin(); iter != ss.end(); iter++)
-    {
-        cout << *iter << endl;
-    }
-}
-
 void Conseal() 
 {
     Graph* p;
     p = new Graph;
     BusGraph* Bp;
     Bp = new BusGraph(*p);
-    cout << p->GetStopName(58) << "  " << p->GetStopName(4141) << endl;
-    Bp->BFS(* p, 58, 178);
-    /*string s, e;
+    string s, e, res = "yes";
     int u=-1, v=-1;
-    cout << "--------------------------------------------------" << endl;
-    cout << "欢 迎 使 用 公 交 路 线 提 示 系 统" << endl;
-    cout << "请输入起始站 : ";
-    cin >> s;
-    
-    u = p->FindStop(s);
-    while (u == -1)
+    while (res == "yes" || res == "y" || res == "Y" || res == "1")
     {
-        cout << "输入的起始站 " << s << " 为非法输入，请重新输入 : ";
+        system("cls");
+        cout << "----------------------------------------------------------" << endl;
+        cout << "欢 迎 使 用 公 交 路 线 提 示 系 统" << endl;
+        cout << "请输入起始站 : ";
         cin >> s;
-        u = p->FindStop(s);
-    }
 
-    cout << endl << "请输入终点站 : ";
-    cin >> e;
-    v = p->FindStop(e);
-    while (v == -1)
-    {
-        cout << "输入的终点站 "<<e<<" 为非法输入，请重新输入 : ";
+        u = p->FindStop(s);
+        while (u == -1)
+        {
+            cout << "输入的起始站 " << s << " 为非法输入，请重新输入 : ";
+            cin >> s;
+            u = p->FindStop(s);
+        }
+
+        cout << endl << "请输入终点站 : ";
         cin >> e;
         v = p->FindStop(e);
+        while (v == -1)
+        {
+            cout << "输入的终点站 " << e << " 为非法输入，请重新输入 : ";
+            cin >> e;
+            v = p->FindStop(e);
+        }
+        cout << "----------------------------------------------------------" << endl;
+        if (u == v)
+        {
+            cout << "起始站和终点站为同一地点，无需乘车" << endl;
+        }
+        else
+        {
+            p->BFS(u, v);
+            Bp->BFS(*p, u, v);
+        }
+        cout << "是否需要继续查询？(yes or no)" << endl;
+        cin >> res;
     }
-    if (u == v) 
-    {
-        cout << "起始站和终点站为同一地点，无需乘车" << endl;
-    }
-    else 
-    {
-       
-    }*/
-    return;
+    return ;
 }
 //控制台函数
 
