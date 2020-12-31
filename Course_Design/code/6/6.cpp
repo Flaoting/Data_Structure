@@ -329,34 +329,34 @@ string Graph:: GetStopName(int i)
     return string(this->stations[i].name);
 }
 
-void Graph::BFS(int u, int v) 
+void Graph::BFS(int u, int v)
 //从u向v进行广度优先搜索
 {
     ArcNode* p = stations[u].firstArc;
     int temp = u;
     bool flag = false;
-    
+
     queue<int> Q;
-    
+
     visit[u] = 1;
-    
+
     Q.push(u);
 
-    while (!Q.empty()) 
+    while (!Q.empty())
     {
         //cout << "yes" << endl;
-        if (flag) 
+        if (flag)
         {
             break;
         }
         temp = Q.front();
         Q.pop();
-        for (p = stations[temp].firstArc; p != NULL; p = p->nextarc) 
+        for (p = stations[temp].firstArc; p != NULL; p = p->nextarc)
         {
-            if (this->visit[p->adjvex] == 0) 
+            if (this->visit[p->adjvex] == 0)
             {
                 visit[p->adjvex] = visit[temp] + 1;
-                cout << p->adjvex << " " << v << endl;
+                //cout << p->adjvex << " " << v << endl;
                 if (p->adjvex == v)
                 {
                     flag = true;
@@ -364,7 +364,7 @@ void Graph::BFS(int u, int v)
                 }
                 Q.push(p->adjvex);
             }
-            
+
         }
     }
     cout << "最短路线共经过 " << visit[p->adjvex] << "站" << endl;
@@ -377,9 +377,9 @@ void Graph::BFS(int u, int v)
 
     for (int i = visit[v] - 1; i > 1; i--)
     {
-        for (int j = 0; j < this->vexnum; j++) 
+        for (int j = 0; j < this->vexnum; j++)
         {
-            if (visit[j] == i && IsAdj(pre,j))
+            if (visit[j] == i && IsAdj(pre, j))
             {
                 trail.push(j);
                 pre = j;
@@ -391,13 +391,13 @@ void Graph::BFS(int u, int v)
 
     cout << stations[u].name;
     pre = u;
-    while (!trail.empty()) 
+    while (!trail.empty())
     {
         cout << " -> ";
         k = trail.top();
         trail.pop();
         AD = this->GetFirstArc(k);
-        while (AD->adjvex != pre) 
+        while (AD->adjvex != pre)
         {
             AD = AD->nextarc;
         }
@@ -405,7 +405,7 @@ void Graph::BFS(int u, int v)
         if (bus.empty() || bus.top() != AD->road)
         {
             bus.push(AD->road);
-            if (bus.size()!=1) 
+            if (bus.size() != 1)
             {
                 //cout << "(此处换乘 " << AD->road << "路 )";
             }
@@ -463,6 +463,8 @@ public:
     int FindBusNumber(int i);
 
     bool IsAdj(int i, int j);
+
+    string GetTransfer(int u, int v);
 };
 
 BusGraph::BusGraph(Graph &G)
@@ -483,7 +485,7 @@ BusGraph::BusGraph(Graph &G)
     {
         f[j] = false;
     }
-    for (int i = 0; i < 10; i++) //遍历每个站 
+    for (int i = 0; i < G.GetVexnum(); i++) //遍历每个站 
     {   
         p = stations[i].firstArc;
 
@@ -493,7 +495,6 @@ BusGraph::BusGraph(Graph &G)
             {
                 f[p->road] = true;
                 this->vexnum++;
-                cout << this->vexnum << endl;
             }
 
             q = p->nextarc;
@@ -526,9 +527,14 @@ void BusGraph::BFS(Graph &G,int u, int v)
     Arc* AC = NULL;
     int k = 0;
     bool flag = false;
+    for (int i = 1; i < this->vexnum; i++)
+    {
+        visit[i] = 0;
+    }
     while (AD != NULL)      //把起点站的所有可乘车放进队列中
     {
         Q.push(AD->road);
+        this->visit[AD->road] = 1; //上车就算了一次，与别的线路区分开
         AD = AD->nextarc;
     }
     while (!Q.empty())
@@ -537,25 +543,74 @@ void BusGraph::BFS(Graph &G,int u, int v)
         {
             break;
         }
-        k = Q.front();  //去除条公交路线
+        k = Q.front();  //取出一条公交路线
         Q.pop();
         AC = this->buss[k].firstArc;   //遍历这条公交路线的所有车站
-        
         while (AC != NULL)
         {
-            if (visit[AC->adjvex] == 0)
+            if (visit[AC->adjvex] == 0) //可以抵达一个新的公交路线，那么搜索深度加一
             {
                 visit[AC->adjvex] = visit[k] + 1;
-                if (strcmp(AC->stop, stations[v].name) == 0)
-                {
-                    flag = true;
-                    break;
-                }
                 Q.push(AC->adjvex);
             }
+            if (strcmp(AC->stop, stations[v].name) == 0)
+            {
+                flag = true;
+                break;
+            }
+            AC = AC->nextArc;
         }
-
     }
+
+    //搜索到最少换乘的路线之后，现在进行输出
+    stack<int> BU;
+    int pre = k;    //k为最后乘坐的一个公交车
+    BU.push(k);
+
+    /*cout <<"visit[k] = " <<visit[k] << endl;*/
+    for (int deep = visit[k] - 1; deep > 0; deep--) 
+    {
+
+        for (int j = 1; j <= this->vexnum; j++)
+        {
+
+            if (deep == visit[j] && this->IsAdj(j, pre))
+            {
+                BU.push(j);//找到了邻接点(线路)
+                break;
+            }
+        }
+    }
+    queue<int> sim;
+    sim.push(BU.top());
+    cout << "---------------------------------------------------------" << endl;
+    cout << "换 乘 次 数 最 少 的 路 线  如 下  : " << endl;
+    cout << "从 " << G.GetStopName(u) << "乘坐 " ;
+    pre = BU.top();
+    cout << pre << " 路";
+    BU.pop();
+    while (!BU.empty())
+    {
+        k = BU.top();
+        cout << "  -> 在 ";
+        cout <<  GetTransfer(pre, k)<< " 站换乘 ";
+        cout <<k<< " 路";
+        sim.push(k);
+        pre = k;
+        BU.pop();
+    }
+    cout << "  最终到达 " << G.GetStopName(v) << endl;
+    cout << endl;
+    cout << "所需乘坐的公交线路如下 : " << endl;
+    cout << sim.front();
+    sim.pop();
+    while (!sim.empty())
+    {
+        cout << " -> ";
+        cout <<" "<< sim.front()<<" 路";
+        sim.pop();
+    }
+    cout << endl;
 }
 
 void BusGraph::AddArc(int u, int v, string stop)
@@ -575,7 +630,6 @@ void BusGraph::AddArc(int u, int v, string stop)
         }
         p = p->nextArc;
     }
-    cout << u <<"  "<< v << " "<< stop << endl;
    
     if (AD == NULL) 
     {
@@ -665,7 +719,7 @@ bool BusGraph::IsAdj(int i, int j)
         }
         while (AS != NULL)
         {
-            if (AS->adjvex == j)
+            if (AS->adjvex == i)
             {
                 return true;
             }
@@ -673,6 +727,27 @@ bool BusGraph::IsAdj(int i, int j)
         }
     }
     return false;
+}
+
+string BusGraph::GetTransfer(int u, int v) 
+{
+    Arc* AD = this->buss[u].firstArc;
+    if (!this->IsAdj(u , v))
+    {
+        return "-1";  //如果不相邻的两个线路，返回空字符串
+    }
+    else 
+    {
+        while (AD != NULL)
+        {
+            if (AD->adjvex == v)
+            {
+                string s(AD->stop);    //找到连接的站点，把名称返回回去
+                return s;
+            }
+            AD = AD->nextArc;
+        }
+    }
 }
 
 void test()
@@ -696,6 +771,8 @@ void Conseal()
     p = new Graph;
     BusGraph* Bp;
     Bp = new BusGraph(*p);
+    cout << p->GetStopName(58) << "  " << p->GetStopName(4141) << endl;
+    Bp->BFS(* p, 58, 178);
     /*string s, e;
     int u=-1, v=-1;
     cout << "--------------------------------------------------" << endl;
@@ -726,7 +803,7 @@ void Conseal()
     }
     else 
     {
-        p->BFS(u, v);
+       
     }*/
     return;
 }
