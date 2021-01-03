@@ -10,10 +10,10 @@
 （4）显示第n 代所有人的信息。√
 （5）按照姓名查询，输出成员信息（包括其本人、父亲、孩子的信息）。√
 （6）按照出生日期查询成员名单。√
-（7）输入两人姓名，确定其关系。
-（8）某成员添加孩子。
-（9）删除某成员（若其还有后代，则一并删除）。
-（10）修改某成员信息。
+（7）输入两人姓名，确定其关系。√
+（8）某成员添加孩子。√
+（9）删除某成员（若其还有后代，则一并删除）。√
+（10）修改某成员信息。√
 （11）要求建立至少40个成员的数据，以较为直观的方式显示结果，并提供文稿形式以便检查。
 （12）界面要求：有合理的提示，每个功能可以设立菜单，根据提示，可以完成相关的功能要求。
 （13）存储结构：根据系统功能要求自行设计，但是要求相关数据要存储在数据文件中。测试数据：要求使用1、全部合法数据；2、局部非法数据。进行程序测试，以保证程序的稳定。
@@ -38,6 +38,7 @@ typedef struct PeopleData
 	string DataOfDeath;
 	bool MaritalStatus;	//婚姻状况
 	string Address;
+	string Relationship_identification_number;	//与祖先关系识别码,表明了他的父亲是谁
 
 }PeopleData;	//打包成一个人的信息
 
@@ -179,6 +180,7 @@ vector<string> split_with(const string& str)
 	return res;
 }
 
+
 string GetMaritalStatus(bool b) 
 {
 	if (b) 
@@ -206,6 +208,8 @@ void printPeopleInfo(People* peo)
 	{
 		cout << "逝世日期 : " << peo->data.DataOfDeath << endl;
 	}
+	cout << "家庭住址 : " << peo->data.Address << endl;
+	cout << "关系码   : " << peo->data.Relationship_identification_number << endl;
 	cout << endl;
 	return;
 }
@@ -279,6 +283,11 @@ void printRealtionInfo(People* peo)
 }
 //打印一个人的本人、父亲、孩子信息
 
+void JustDisplayName(People* p)
+{
+	cout << p->data.name << " ";
+}
+
 
 class Genealogy
 {
@@ -286,21 +295,47 @@ private:
 	Tree AncePtr;			//祖先指针，这个结点不存内容
 	int personNum;			//这个家谱有多少人
 	int levelNum;			//这个家谱有几代人
-	
+
 public:
 	Genealogy();
 	~Genealogy();
+
+
 	bool JudgeStatus(string s);
 	//判断一个状态字符串的是与否
+
+	vector<string> GetAPersonFromConseal();
+	//从屏幕获取一个人的信息,返回一个长度为6的vector
+
+	People* GetPtrByName(string name);
+	//通过姓名获得成员的指针
+
 	void BuildTreeFromFile();
 	//从文件读取数据建立家谱
-	bool InsertNewMan(vector<string> &res);
-	
+
+	bool InsertNewMan(vector<string>& res);
+
 	void showGeneratinN(int n);
 
 	void QueryByName(string name);
 
 	void QueryByBirthAndShowList(string start, string end);
+
+	bool JudgeRelationship(string name1, string name2);
+	//判断两个人的关系
+
+	bool AddChild(string name);
+	//添加某个成员的孩子,name是父亲的名字
+
+	bool DeleteMembers(string name);
+	//删除某成员及其孩子
+
+	void ChangeMemberInfo(string name);
+	//改变某成员的信息
+
+	void IndentDisplay();
+	//缩进打印家谱
+
 };
 
 Genealogy::Genealogy()
@@ -363,7 +398,7 @@ bool Genealogy::InsertNewMan(vector<string> &res)
 		}
 		cout << endl;
 		cout << res.size() << endl;
-		cout << "FUCK" << endl;
+		cout << "ERROR" << endl;
 		return false;
 	}
 
@@ -384,7 +419,8 @@ bool Genealogy::InsertNewMan(vector<string> &res)
 	peo->data.DataOfBrith = res[2];
 	peo->data.DataOfDeath = res[3];
 	peo->data.MaritalStatus = JudgeStatus(res[4]);
-	peo->data.Address = res[6];
+	peo->data.Address = res[5];
+	peo->data.Relationship_identification_number = res[6];
 
 	peo->firstchild = NULL;
 	peo->nextBrother = NULL;
@@ -593,13 +629,422 @@ void Genealogy::QueryByBirthAndShowList(string s, string e)
 	}
 }
 
+People* Genealogy::GetPtrByName(string name) 
+{
+	People* p = this->AncePtr;
+	queue<Tree>	Q;
+	Q.push(p);
+
+	while (!Q.empty()) 
+	{
+		p = Q.front();
+		Q.pop();
+		if (p->data.name == name)
+		{
+			return p;
+		}
+		else 
+		{
+			p = p->firstchild;
+			while (p != NULL)
+			{
+				Q.push(p);
+				p = p->nextBrother;
+			}
+		}
+	}
+	return NULL;
+}
+
+bool Genealogy::JudgeRelationship(string name1, string name2)
+{
+	People* p1 = NULL, * p2 = NULL, *pre = NULL;
+	p1 = GetPtrByName(name1);
+	p2 = GetPtrByName(name2);
+
+	if (p1 == NULL || p2 == NULL)
+	{
+		if (p1 == NULL)
+		{
+			cout << "姓名为 " << name1 << " 的成员未在家谱中，请检查拼写是否正确。" << endl;
+		}
+		if (p2 == NULL)
+		{
+			cout << "姓名为 " << name2 << " 的成员未在家谱中，请检查拼写是否正确。" << endl;
+		}
+		return false;
+	}
+	else if (p1 == p2)
+	{
+		cout << "查询关系 " << name1 << " 与 " << name2 << " 为同一个人 " << endl;
+		return true;
+	}
+	stack<Tree> S1, S2;
+	queue<Tree> Q;
+	S1.push(p1);
+	S2.push(p2);
+	
+	while (p1->parent != NULL) 
+	{
+		p1 = p1->parent;
+		S1.push(p1);
+	}
+	
+	while (p2->parent != NULL)
+	{
+		p2 = p2->parent;
+		S2.push(p2);
+	}
+	
+	p1 = S1.top();
+	p2 = S2.top();
+
+	pre = this->AncePtr;
+
+	while (p1 == p2 && !S1.empty() && !S2.empty() ) 
+	{
+		pre = p1;
+		p1 = S1.top();
+		p2 = S2.top();
+		S1.pop();
+		S2.pop();
+	}
+
+	Q.push(pre);
+
+	if (S1.empty() || S2.empty())
+	{
+		Q.pop();
+		p1 = GetPtrByName(name1);
+		p2 = GetPtrByName(name2);
+		if (S1.empty())
+		{
+			cout << name2 << " 是 " << name1 << " 的直系子孙" << endl<<endl;
+			cout << name1;
+			Q.push(p1);
+			while (!S2.empty())
+			{
+				p2 = S2.top();
+				Q.push(p2);
+				S2.pop();
+				cout << " --- " << p2->data.name;
+			}
+			cout << endl;
+		}
+		else 
+		{
+			cout << name1 << " 是 " << name2 << " 的直系子孙" << endl << endl;
+			cout << name2;
+			Q.push(p2);
+			while (!S1.empty())
+			{
+				p1 = S1.top();
+				Q.push(p1);
+				S1.pop();
+				cout << " --- " << p1->data.name;
+			}
+			cout << endl;
+		}
+		
+	}
+
+	else 
+	{
+
+		cout << pre->data.name << "--";
+
+		while (!S1.empty())
+		{
+			p1 = S1.top();
+			Q.push(p1);
+			S1.pop();
+			cout << " --- " << p1->data.name;
+		}
+		cout << endl;
+		cout << "   |   " << endl;
+		cout << "   |   " << endl;
+		cout << "   ---";
+		while (!S2.empty())
+		{
+			p2 = S2.top();
+			Q.push(p2);
+			S2.pop();
+			cout << " --- " << p2->data.name;
+		}
+		cout << endl;
+	}
+	cout << endl;
+	cout << "查询成功  即将打印信息..." << endl;
+	//_sleep(1); 
+	cout << "-----------------------------------------------------" << endl;
+
+	cout << "所有涉及成员的详细信息如下" << endl;
+
+	while (!Q.empty())
+	{
+		p1 = Q.front();
+		Q.pop();
+		printPeopleInfo(p1);
+	}
+	return true;
+}
+
+bool Genealogy::AddChild(string name)
+{
+	/*实现方法:查找父亲姓名，构造01串，构造孩子的数据包*/
+
+	People* p, *q, *k;
+	string relation_number;
+	vector <string> res;
+	p = GetPtrByName(name);
+	if (p == NULL)
+	{
+		cout << "家谱中无查无此人,请检查拼写" << endl;
+		return false;
+	}
+	q = p->firstchild;
+	k = p->parent;
+	if (q != NULL)	//有孩子直接定位
+	{
+		relation_number = q->data.Relationship_identification_number;
+	}
+	else	//无孩子就通过爷爷
+	{
+		relation_number = p->data.Relationship_identification_number;
+		k = k->firstchild;
+		while (k != NULL)
+		{
+			relation_number = relation_number + "0";
+		}
+	}
+
+	cout << "注意 即将在家谱中以 " << name << " 为父亲插入成员插入成员" << endl;
+	cout << "-----------------------------------------------------" << endl;
+	res = GetAPersonFromConseal();
+	res.push_back(relation_number);
+
+	
+	if (!this->InsertNewMan(res)) 
+	{
+		cout <<endl<< "插入失败，请检查" << endl;
+		return false;
+	}
+	else 
+	{
+		cout << endl << "插入成功!!!" << endl;
+		return true;
+	}
+}
+
+vector<string> Genealogy::GetAPersonFromConseal()
+{
+	vector<string> res;
+	string temp;
+	bool flag = false;
+	cout << "下面开始输入个人信息..." << endl;
+
+	cout << "姓    名 : ";
+	cin >> temp;
+	res.push_back(temp);
+
+	cout << "是否健在 : ";
+	cin >> temp;
+	res.push_back(temp);
+
+	flag = this->JudgeStatus(temp);
+
+	cout << "出生日期 : ";
+	cin >> temp;
+	res.push_back(temp);
+
+	if (!flag) 
+	{
+		cout << "逝世日期 : ";
+		cin >> temp;
+		res.push_back(temp);
+	}
+	else 
+	{
+		temp = "";
+		res.push_back(temp);
+	}
+	
+	cout << "婚姻状况 : ";
+	cin >> temp;
+	res.push_back(temp);
+	
+	cout << "住    址 : ";
+	cin >> temp;
+	res.push_back(temp);
+
+	return res;
+}
+
+bool Genealogy::DeleteMembers(string name) 
+{
+	/*逐出家门*/
+	People* p , *q ,*k;
+	q = NULL;
+	k = NULL;
+	p = GetPtrByName(name);
+	if (p == NULL)
+	{
+		cout << "家谱中无查无此人,请检查拼写" << endl;
+		return false;
+	}
+	q = p->parent->firstchild;
+	//指向删除人的大哥(或者自己)
+
+	if (p == q) //自己就是大哥的话
+	{
+		p->parent->firstchild = p->nextBrother;
+		//自己是大哥，二哥变大哥
+	}
+	else 
+	{
+		//自己不是大哥，找到自己的上一个哥哥
+
+		while (q != NULL)
+		{
+			if (q->nextBrother == p)
+			{
+				break;
+			}
+			q = q->nextBrother;
+		}
+		//q是上一个哥哥
+		if (q != NULL) 
+		{
+			q->nextBrother = p->nextBrother;
+			if (p->nextBrother != NULL)
+			{
+				p->nextBrother->leftBrother = q;
+			}
+		}
+	}
+	
+	queue<Tree>Q,L;
+	Q.push(p);
+	int cnt = 0;
+	while (!Q.empty())
+	{
+		p = Q.front();
+		Q.pop();
+		q = p->firstchild;
+		while (q != NULL) 
+		{
+			Q.push(q);
+			q = q->nextBrother;
+		}
+		L.push(p);
+		cnt++;
+	}
+	cout << "即将删除 " << cnt << " 位成员 ....." << endl;
+	cout << "-----------------------------------------------------" << endl;
+	cout << "删除人员详细信息如下" << endl << endl;
+	while (!L.empty())
+	{
+		p = L.front();
+		L.pop();
+		printPeopleInfo(p);
+		free(p);
+	}
+	return true;
+}
+
+void Genealogy::ChangeMemberInfo(string name) 
+{
+	People* peo = GetPtrByName(name);
+	vector<string> res;
+	if (peo == NULL)
+	{
+		cout << "家谱中无查无此人,请检查拼写" << endl;
+		return;
+	}
+
+	cout << "注意 即将修改以下成员的个人信息 " << endl;
+	cout << "-----------------------------------------------------" << endl;
+	printPeopleInfo(peo);
+
+	cout << "-----------------------------------------------------" << endl;
+	
+	cout << "请重新输入的" << name << "个人信息" << endl;
+	res = GetAPersonFromConseal();
+	
+	while(res.size() < 6) 
+	{
+		cout << "信息输入有误，输入信息为";
+		for (vector<string>::iterator iter = res.begin(); iter != res.end(); iter++) 
+		{
+			cout << *iter << " ";
+		}
+		cout << endl;
+		cout << "请重新输入的" << name << "个人信息" << endl;
+		res = GetAPersonFromConseal();
+	}
+	
+	peo->data.name = res[0];
+	peo->data.AliveStatus = JudgeStatus(res[1]);
+	peo->data.DataOfBrith = res[2];
+	peo->data.DataOfDeath = res[3];
+	peo->data.MaritalStatus = JudgeStatus(res[4]);
+	peo->data.Address = res[5];
+
+	cout << "信息修改成功!!" << endl;
+	cout << "-----------------------------------------------------" << endl;
+	cout << "当前个人信息为" << endl;
+	printPeopleInfo(peo);
+	cout << "-----------------------------------------------------" << endl;
+	return;
+}
+
+void r_display(Tree peo, int gap)
+{
+	if (peo == NULL)
+	{
+		return;
+	}
+	for (int i = 0; i < gap; i++)
+	{
+		cout << "-";
+		if (i % 4 == 0) 
+		{
+			cout << "*";
+		}
+	}
+	JustDisplayName(peo);
+	cout << endl;
+	Tree child = peo->firstchild;
+	r_display(child, gap + 6);
+
+	Tree brother = peo->nextBrother;
+	r_display(brother, gap);
+}
+//递归打印树
+
+void Genealogy::IndentDisplay()
+{
+	if (this->AncePtr == NULL)
+	{
+		cout << "null" << endl;
+	}
+	else
+	{
+		r_display(this->AncePtr, 0);
+	}
+	return;
+}
+
 int main() 
 {
 	Genealogy g;
 	g.BuildTreeFromFile();
-	g.QueryByBirthAndShowList("1870.3.1", "1991.10.23");
+	/*g.DeleteMembers("王浩");
+	printRealtionInfo(g.GetPtrByName("王景逸"));
+
+	g.ChangeMemberInfo("王景逸");
+	*/
+	g.IndentDisplay();
 	return 0;
 }
-
-
 
