@@ -6,90 +6,131 @@
 （2） 在Huffman编码后，英文文章编码结果保存到文件中(code.dat)，编码结果必须是二进制形式，即0 1的信息用比特位表示，不能用字符’0’和’1’表示。
 （3） 实现解码功能。
 */
-/*实现对ASCII码 32~126 这95个字符的编码，他们的权重由在源文件中出现的频率决定，首先读取文件，计算每个ASCII码对应的权重，*/
-
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
-#include <fstream>
-#include <malloc.h>
+#include <queue>
 #include <string>
+#include <fstream>
 using namespace std;
 #define MAX_VALUE 2222222
 #define MaxBit 10
+
 typedef struct HTNode
 {
     int weight;
     int parent, lchild, rchild;
     bool flag;  //对树合并时进行标记
-}HTNode,*HufTree;
+}HTNode, * HufTree;
 
-typedef struct Code   //存放哈夫曼编码的数据元素结构
+typedef struct FileInfo		//文件信息类,对应一个字符
 {
-    char data;      //存入字符数据
-    int bit[MaxBit];//数组
-    int start;//编码的起始下标
-    int weight;//字符的权值
-}HufCode;
+    unsigned char ch;	//这个字符
+    int count;			//出现的次数
+    string hufcode;		//对应的霍夫曼编码
+    bool operator <(const FileInfo &a)		//重载小于号
+	{
+		return this->count < a.count;
+	}
+}FileInfo;
 
-void CaculateWeightAndSaveFile(int *weight, string inName, string outName)
+class HufOperate
 {
-    //对ASCII码在32~126的可显示码进行统计
-    fstream inFile(inName.c_str(), ios::in);
-    fstream outFile(outName.c_str(), ios::out);
-    if(!inFile)
-    {
-        throw "Floating TIP   In the function void CaculateWeightAndSaveFile()  File " + inName + " can't be opened , please check it. ";
-    }
+private:
+    HufTree HT;
+    FileInfo exist[128];    //存在于文件中ASCII码的信息
+    int length;
+public:
+	HufOperate();
+	~HufOperate();
+
+    void read(string inName, string outName);
+    //根据文件名读取并储存文件信息(source.txt Huffman.txt)
+
+    void initHufTree();
+    //初始化霍夫曼树
     
-    for(int i = 0; i < 95; i++)
+    void CreateHufTree();
+    //建立霍夫曼树
+    
+    void CodeHufCode();
+    //根据霍夫曼树进行编码
+
+    bool Compress(const string inName, const string outName);
+    //文件压缩
+
+    void Rebuild();
+    //重新建树和编码
+
+    void DeCodeFile();
+    //解压文件
+};
+
+HufOperate::HufOperate()
+{
+    this->HT = NULL;
+    this->length = 0;
+}
+
+HufOperate::~HufOperate()
+{
+}
+
+void HufOperate::read(string inName, string outName)
+{
+    fstream inFile(inName.c_str(), ios::in);
+    if (!inFile)
+    {
+        throw "File " + inName + " can't be opened , please check it. ";
+        return;
+    }
+    int weight[128];
+
+    for (int i = 0; i < 128; i++) 
     {
         weight[i] = 0;
     }
-
-    char ch = 'A'; 
-
+    char ch = 'A';
+    int c = 0;
     while (!inFile.eof())
     {
         ch = inFile.get();
-
-        if(ch >= 32 && ch <= 126)
+        if (ch >= 32 &&ch <= 127) 
         {
-            weight[ch - 32]++;
+            if (weight[ch] == 0)
+            {
+                this->length++; //统计出现字符的个数
+            }
+            weight[ch]++;
+            c++;
         }
     }
-
-    for(int i = 0; i < 95; i++)
-    {
-        outFile << (char)(i + 32) << " " << weight[i]<<endl;
-        //cout << (char)i << " " << weight[i]<<endl;
-    }
-
     inFile.close();
+    cout << "共计" << c << "个字符" << endl;
+    cout << "共计" << this->length << "种字符" << endl;
+    fstream outFile(outName.c_str(), ios::out);
+
+    int cnt = 1;
+    for (int i = 1; i < 128; i++)
+    {
+        if (weight[i] != 0)
+        {
+            outFile << (char)(i) << " " << weight[i] << endl;
+            exist[cnt].ch = i;
+            exist[cnt].count = weight[i];
+            cnt++;
+        }
+    }
     outFile.close();
     return;
 }
 
-void readFrequency(int &n, HufCode code[], string frequencyFileName)  //个数 编码数组 文件名
+void HufOperate::initHufTree( )
 {
-    fstream file(frequencyFileName.c_str(),ios::in);
-    if(!file)
+    for (int i = 1; i <= 2 * length - 1; i++)   //对这2n-1个结点进行初始化
     {
-        throw "Floating TIP   In the function void readFrequency()  File " + frequencyFileName + " can't be opened , please check it. ";
-    }
-    for (int i = 1; i <= n; i++)
-    {
-        file >> code[i].data >> code[i].weight;
-    }
-    file.close();
-    return;
-}
-
-void initHufTree(HufTree &HT,int n,int *w)
-{
-    for(int i = 1; i <= 2*n - 1; i++)
-    {
-        if(i <= n)
+        if (i <= length)            //要是叶子的话，对权值进行初始化
         {
-            HT[i].weight = w[i];
+            HT[i].weight = this->exist[i].count;
         }
         else
         {
@@ -100,166 +141,238 @@ void initHufTree(HufTree &HT,int n,int *w)
         HT[i].lchild = -1;
         HT[i].rchild = -1;
     }
+    return;
 }
 
-void CreateHufTree(HufTree &HT, int n, int *w)
+void HufOperate::CreateHufTree()
 {
-    if(n <= 0) 
+    if (length <= 0)
     {
-        return ;
+        return;
     }
-    HT = (HufTree)malloc(sizeof(HTNode)*2*n + 10);
-    int x1,x2;
-    int w1,w2;
-    for(int i = 1; i <= n-1; i++)
+
+    HT = (HufTree)malloc(sizeof(HTNode) * 2 * length );
+    initHufTree();  //初始化
+
+    int x1, x2;
+    int w1, w2;
+    int n = length;
+
+    for (int i = n + 1; i <2 * n; i++)
     {
         x1 = 1;
         x2 = 1;
         w1 = MAX_VALUE;
         w2 = MAX_VALUE;
-
-        for(int j = 1; j <= n+i; j++)
+        for (int j = 1; j <= i - 1; j++)
         {
-            if(HT[j].weight< w1 && !HT[j].flag)
+            if (HT[j].weight < w1 && !HT[j].flag)
             {
                 w2 = w1;
                 x2 = x1;
                 x1 = j;
                 w1 = HT[j].weight;
             }
-            else if(HT[j].weight < w2 && !HT[j].flag)
+            else if (HT[j].weight < w2 && !HT[j].flag)
             {
                 x2 = j;
                 w2 = HT[j].weight;
             }
         }
-
-        HT[n + i].lchild = x1;
-        HT[n + i].rchild = x2;
-        HT[n + i].weight = HT[x1].weight + HT[x2].weight;
-        HT[x1].parent = n + i;
-        HT[x2].parent = n + i;
+        HT[i].lchild = x1;
+        HT[i].rchild = x2;
+        HT[i].weight = HT[x1].weight + HT[x2].weight;
+        HT[x1].parent = i;
+        HT[x2].parent = i;
         HT[x1].flag = true;
         HT[x2].flag = true;
+        //选出两个最小的结点，放到的单元格里
+        //cout << HT[x1].weight<< "  " << HT[x2].weight << "  "<<HT[i].weight<<endl;
     }
     return;
 }
-//建立霍夫曼树
 
-void CaculateHufCoding(HufTree HT, HufCode HufTable[], int n)  //Tree ,霍夫曼编码表 n个节点
+void HufOperate::CodeHufCode()
 {
-    HufCode *cd = (HufCode*)malloc(sizeof(HufCode));
-    int child, parent;  //临时变量
-
-    for(int i = 1; i <= n; i ++)
+    string temp;
+    for (int i = 1; i <= length; i++) 
     {
-        cd->start = 0;
-        cd->weight = HT[i].weight;
-        child = i;
-        parent = HT[child].parent;
-
-        while(parent != 0)  //向上寻找,直到找到根节点
-         {
-            if(HT[parent].lchild == child)
+        temp = "";
+        for (int j = i, f = HT[i].parent; f != 0; j = f, f = HT[f].parent)
+        {
+            if (HT[f].lchild == j)      //左孩子为0
             {
-                cd->bit[cd->start] = 0;     //左边是0
+                temp += "0";
             }
-            if(HT[parent].rchild == child)
+            else                        //右孩子为1
             {
-                cd->bit[cd->start] = 1;     //右边是1
+                temp += "1";
             }
-            cd->start ++;
-            child = parent;
-            parent = HT[parent].parent;
         }
+        reverse(temp.begin(), temp.end());
+        this->exist[i].hufcode = temp;
+        //cout <<this->exist[i].count<<"  "<< this->exist[i].hufcode << endl;
     }
+    return;
 }
 
-void ShowHufTree(HufTree &BT)
+bool HufOperate::Compress(const string filename, const string outName)
+{
+    //1.打开一个文件，统计文件字符出现的次数
+    //2.生成对应的哈弗曼编码
+    //3.压缩文件
+    //4.写配置文件，方便解压缩
+
+    read(filename, outName);    //读出数据
+    CreateHufTree();            //建树
+    CodeHufCode();              //编码
+    
+    string compressFile = "code.dat";
+    //压缩后的文件名 
+    FILE* file = fopen(filename.c_str(), "rb");
+    FILE* finCompress = fopen(compressFile.c_str(), "wb"); 
+
+    char ch = fgetc(file);
+    unsigned char inch = 0;
+    int index = 0,ht_index;  //一个字节的八位
+
+    while (!feof(file))
+    {
+        ht_index = 32;
+        for (int i = 1; i <= length; i++)
+        {
+            if (this->exist[i].ch == ch)
+            {
+                ht_index = i;
+            }
+        }
+        string& code = this->exist[ht_index].hufcode;
+
+        for (int i = 0; i < code.size(); i++)
+        {
+            inch <<= 1;     //低位向高位进
+            if (code[i] == '1')
+            {
+                inch |= 1;  //这一位是1的话就存1
+            }
+
+            if (++index == 8)
+            {
+                fputc(inch, finCompress); //够8位，装进文件
+                index = 0;   //重新一轮开始
+                inch = 0;
+            }
+        }
+        ch = fgetc(file);
+    }
+
+    fclose(file);
+
+    //如果index = 0 说明 上边8位刚好存满 不等 下一个自己又出来了
+    if (index != 0)   //处理最后一个字符不够的问题
+    {
+        inch <<= (8 - index); //最高位必须装上 后边的浪费掉
+        fputc(inch, finCompress);
+    }
+
+    fclose(finCompress);
+    return true;
+}
+
+void HufOperate::Rebuild()
+{
+    fstream file("Huffman.txt", ios::in);
+    if (!file)
+    {
+        cout << "Huffman.txt can't be opened " << endl;
+        return;
+    }
+    int cnt = 1;
+    char ch;
+    int fre = 0;
+    while (!file.eof())
+    {
+      
+        ch = file.get();
+        file >> fre;
+        file.ignore();
+        if (ch >= 32 && ch <= 127)
+        {
+            this->exist[cnt].ch = ch;
+            this->exist[cnt].count = fre;
+            cnt++;
+            this->length++;
+        }
+    }
+    CreateHufTree();            //建树
+    CodeHufCode();              //编码
+}
+
+void HufOperate::DeCodeFile( ) 
 {
 
+    //原压缩文件
+    string inName = "code.dat";
+    string outName = "recode.txt";
+
+    FILE* file = fopen(inName.c_str(), "rb");
+    FILE* out = fopen(outName.c_str(), "w");
+    if (!file)
+    {
+        cout << "文件 " << inName << "打开失败" << endl;
+    }
+    int pos = 8, ptr = 2*length-1;
+    char ch = fgetc(file);
+
+    while (!feof(file)) 
+    {
+        ptr = 2 * length - 1;
+        while (HT[ptr].lchild != -1 || HT[ptr].rchild != -1)
+        {
+            pos--;
+            unsigned char temp = ch >> pos;
+            int cur = 1 & temp;
+            if (cur == 0)
+            {
+                ptr = HT[ptr].lchild;
+            }
+            if (cur == 1)
+            {
+                ptr = HT[ptr].rchild;
+            }
+            if (pos == 0)
+            {
+                ch = fgetc(file);
+                pos = 8;
+            }
+        }
+        cout << this->exist[ptr].ch;
+        fputc(this->exist[ptr].ch, out);
+    }
+    return;
 }
 
 int main()
 {
+    HufOperate H1,H2;
+    string s1 = "source.txt";
+    string s2 = "Huffman.txt";
+    char cc;
+    cout << "----------欢迎使用霍夫曼编码压缩系统--------------" << endl;
+    cout << "请删除文件夹内多余文件，只保留要压缩的文件source.txt" << endl;
+    cout << "即将开始压缩，任意按键继续....";
+    cc = getchar();
+    cout << endl << "数据统计如下 ： " << endl;
+    H1.Compress(s1, s2);
+    cout << endl;
+    cout << "压缩完毕，请验证压缩文件后删除源文件source.txt" << endl;
+    cout << "即将开始解压，任意按键继续...";
+    cc = getchar();
+    H2.Rebuild();
+    H2.DeCodeFile();
+    cout << "解压成功，演示完毕" << endl;
 
-    int N;
-    int weight[256];
-    string inFileName = "E://vscode//C++//Data_structure//Cours_Design//Sourse//source.txt";
-    string outFileName = "E://vscode//C++//Data_structure//Course_Design//Sourse//Huffman.txt";
-    try
-    {
-        CaculateWeightAndSaveFile(weight, inFileName, outFileName);
-    }catch (string ss)
-    {
-        cout << ss <<endl;
-    }
-
-    //HufTree HT;
-    //read(N,weight);
-    //CreateHufTree(HT, N ,weight);
     return 0;
 }
 
 
-
-
-
-
-
-
-// void print(HuTree ht[],int curr,int depth){
-// 	int i;
-// 	for(i=1;i<=depth;++i)
-// 		printf("  |");
-// 	if(ht[curr].leaf){
-// 		if(ht[curr].leaf->c==' ')//将空格换成|_表示
-// 			printf("|_");
-// 		else if(ht[curr].leaf->c=='/n')//将回车换成_|表示
-// 			printf("_|");
-// 		else
-// 			printf("%c ",ht[curr].leaf->c);
-// 	}
-// 	else
-// 		printf("[]");
-// 	printf("|");
-// 	for(i=depth+2;i<=25;++i)
-// 		printf("  |");
-// 	printf("/n");
-// }
-
-// void PrintHuTree(HuTree ht[],int c_num){
-// 	int curr=2*c_num-1, pos[199], depth=0, i=0, temp, st[199], flag=0, pre=curr;
-// 	pos[pre]=0;
-// 	printf("/nPrinting the Huffman Tree*******************************************************/n");
-// 	printf("/n[] represents the node which is not a leaf node.|_ represents SPACE._| represents ENTER./n/n");
-// 	printf(" 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|/n");//树的深度
-// 	while(i!=0||curr!=0||flag==0)
-//     {
-// 		flag=1;
-// 		while(curr){
-// 			st[++i]=curr;
-// 			if(pre!=curr)
-// 				pos[curr]=pos[pre]+1;
-// 			pre=curr;
-// 			curr=ht[curr].rchild;
-// 		}
-// 		temp=st[i--];
-// 		print(ht,temp,pos[temp]);
-// 		if(ht[temp].lchild){
-// 			curr=ht[temp].lchild;
-// 			pos[curr]=pos[temp]+1;
-// 			pre=curr;
-// 		}
-// 	}
-// }
-
-
-/*
-我方老板  :pjh
-秘书     :pln
-助理     :rxy
-对方老板 :tj
-
-
-*/
