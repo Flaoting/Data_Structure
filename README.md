@@ -1,2 +1,6 @@
 # Data_Structure
-Data Structure is very imoprtant
+### Data Structure is very imoprtant.
+#### 南京航空航天大学计算机科学与技术学院
+大二上学期数据结构课程学习过程中的练习代码
+其中有一些比较有意思的项目，比如连连看/家谱/公交路线/系统进程等题目
+有一定参考价值，欢迎大家批评指正
