@@ -16,7 +16,8 @@
 （10）修改某成员信息。√
 （11）要求建立至少40个成员的数据，以较为直观的方式显示结果，并提供文稿形式以便检查。
 （12）界面要求：有合理的提示，每个功能可以设立菜单，根据提示，可以完成相关的功能要求。
-（13）存储结构：根据系统功能要求自行设计，但是要求相关数据要存储在数据文件中。测试数据：要求使用1、全部合法数据；2、局部非法数据。进行程序测试，以保证程序的稳定。
+（13）存储结构：根据系统功能要求自行设计，但是要求相关数据要存储在数据文件中。
+测试数据：要求使用1、全部合法数据；2、局部非法数据。进行程序测试，以保证程序的稳定。
 */
 
 #include <string>
@@ -114,7 +115,6 @@ typedef struct Date
 
 }Date;
 
-
 int StringToInt(string s) 
 {
 	int num = 0;
@@ -179,7 +179,6 @@ vector<string> split_with(const string& str)
 	}
 	return res;
 }
-
 
 string GetMaritalStatus(bool b) 
 {
@@ -300,7 +299,10 @@ public:
 	Genealogy();
 	~Genealogy();
 
-
+	int returnLevel()
+	{
+		return this->levelNum;
+	}
 	bool JudgeStatus(string s);
 	//判断一个状态字符串的是与否
 
@@ -336,6 +338,7 @@ public:
 	void IndentDisplay();
 	//缩进打印家谱
 
+	void UpdateFile();
 };
 
 Genealogy::Genealogy()
@@ -1035,16 +1038,127 @@ void Genealogy::IndentDisplay()
 	return;
 }
 
-int main() 
+void menu()
+{
+	cout << "1.显示第n 代所有人的信息" << endl;
+	cout << "2.按照姓名查询，输出成员信息（包括其本人、父亲、孩子的信息）" << endl;
+	cout << "3.按照出生日期查询成员名单" << endl;
+	cout << "4.输入两人姓名，确定其关系" << endl;
+	cout << "5.某成员添加孩子" << endl;
+	cout << "6.删除某成员（若其还有后代，则一并删除）" << endl;
+	cout << "7.修改某成员信息" << endl;
+	cout << "8.打印家谱" << endl;
+	cout << "9.结束进程" << endl;
+	return;
+}
+
+void Conseal() 
 {
 	Genealogy g;
 	g.BuildTreeFromFile();
+
+	cout << "--------------欢--迎--使--用--家--谱--系--统---------------" << endl;
+	string s,oo;
+	int k,temp;
+	while (1)
+	{
+		cout << endl << endl;
+		menu();
+		cout << endl;
+		cout << "请选择操作编号:";
+		cin >> k;
+
+		switch (k)
+		{
+			case 1:
+			{
+				cout << "当前最大代数为 : " << g.returnLevel() << endl;
+				cout << "请输入要选择第几代人:";
+				cin >> temp;
+				if (temp > g.returnLevel())
+				{
+					cout << "输 入 超 出 范 围 ！" << endl;
+					break;
+				}
+				g.showGeneratinN(temp);
+				break;
+			}
+			case 2: 
+			{
+				cout << "请输入要查询的姓名 : " << endl;
+				cin >> s;
+				g.QueryByName(s);
+				break;
+			}
+			case 3:
+			{
+				cout << "日期格式为(xxxx.xx.xx)" << endl;
+				cout << "请输入日期一:";
+				cin >> s;
+				cout << endl;
+				cout << "请输入日期二:";
+				cin >> oo;
+				g.QueryByBirthAndShowList(s, oo);
+				break;
+			}
+			case 4:
+			{
+				cout << "请输入姓名一 : ";
+				cin >> s;
+				cout << endl<< "请输入姓名二 : ";
+				cin >> oo;
+				g.JudgeRelationship(s, oo);
+				break;
+			}
+			case 5: 
+			{
+				cout << "请输入姓名 : ";
+				cin >> s;
+				g.AddChild(s);
+				break;
+			}
+			case 6: 
+			{
+				cout << "请输入姓名 : ";
+				cin >> s;
+				g.DeleteMembers(s);
+				break;
+			}
+			case 7:
+			{
+				cout << "请输入姓名 : ";
+				cin >> s;
+				g.ChangeMemberInfo(s);
+				break;
+			}
+			case 8: 
+			{
+				g.IndentDisplay();
+				break;
+			}
+			case 9: 
+			{
+				exit(0);
+			}
+			default:
+				cout << "输入无效" << endl;
+				break;
+		}
+
+	}
+	return;
+}
+
+int main() 
+{
+	
 	/*g.DeleteMembers("王浩");
 	printRealtionInfo(g.GetPtrByName("王景逸"));
 
 	g.ChangeMemberInfo("王景逸");
 	*/
-	g.IndentDisplay();
+	//g.IndentDisplay();
+	Conseal();
 	return 0;
 }
 
